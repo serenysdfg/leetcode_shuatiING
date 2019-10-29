@@ -1,0 +1,184 @@
+177. Nth Highest Salary
+
+问题难度: ? ? ?
+
+问题描述
+
+写一个SQL查询来获得Employee表中第n高的薪水.
+
++----+--------+
+| Id | Salary |
++----+--------+
+| 1  | 100    |
+| 2  | 200    |
+| 3  | 300    |
++----+--------+
+例如, 给定上面的Employee表, 当n=2时的第2高的薪水为200. 如果没有第n高的薪水, 查询应该返回null.
+
++------------------------+
+| getNthHighestSalary(2) |
++------------------------+
+| 200                    |
++------------------------+
+解题思路
+
+类似于之前的题目, 把offset的参数修改下即可.
+
+代码
+
+CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+  DECLARE M int;
+  SET M = N - 1;
+  RETURN (
+      # Write your MySQL query statement below.
+      select IFNULL((select distinct(Salary) from Employee order by Salary desc limit 1 offset M), NULL)
+  );
+END
+
+@178
+写一个SQL语句来对分数进行排序, 如果两个分数之间相等, 两个分数应该有相同的序号. 而相等之后的数的序号应该是连续的整数值, 也就是说, 在序列之间没有任何遗漏.
+
++----+-------+
+| Id | Score |
++----+-------+
+| 1  | 3.50  |
+| 2  | 3.65  |
+| 3  | 4.00  |
+| 4  | 3.85  |
+| 5  | 4.00  |
+| 6  | 3.65  |
++----+-------+
+例如, 给定上面的Score表, 我们的查询语句应该生成下面的结果(分数从高到低排列):
+
++-------+------+
+| Score | Rank |
++-------+------+
+| 4.00  | 1    |
+| 4.00  | 1    |
+| 3.85  | 2    |
+| 3.65  | 3    |
+| 3.65  | 3    |
+| 3.50  | 4    |
++-------+------+
+解题思路
+
+第一种方法: 针对每一个分数, 判断大于该分数的数目作为Rank即可.
+
+第二种方法: 使用内交, Scores表自己内交, 将那些左边表分数大于右边表的join起来, 然后计算数目
+
+第三种方法: 使用两个变量来标识, 其中Rank表示当前排序, pre标识之前的分数
+
+代码
+
+# Write your MySQL query statement below
+SELECT Score, 
+(SELECT count(DISTINCT Score) FROM Scores WHERE Scores.Score >= s.Score) 
+AS Rank FROM Scores s ORDER BY s.Score DESC;
+
+SELECT s.Score, 
+COUNT(DISTINCT t.Score) AS Rank FROM Scores s JOIN Scores t on s.Score <= t.Score GROUP BY s.Id ORDER BY s.Score DESC;
+
+SELECT Score, 
+@rank := @rank + (@pre <> @pre := Score) AS Rank FROM Scores, (SELECT @rank := 0, @pre := -1) INIT ORDER BY Score DESC;
+@179
+问题难度: ? ? ?
+
+问题描述
+
+给定一个非负整数的列表, 对它们重新整理使得形成最大的数字.
+
+示例1
+
+Input: [10,2]
+Output: "210"
+示例2
+
+Input: [3,30,34,5,9]
+Output: "9534330"
+注意: 结果可能会非常大, 因此我们需要返回字符串而不是整数.
+
+解题思路
+
+组合数字: 对列表中的数字进行排序, 排序规则如下:从前向后遍历, 比较出当前数字的大小(其实本质上就是转化为字符串之后再排序).最后将数字叠加起来排序就好.
+
+后来测试了一下, 发现不能直接对字符串进行排序, 例如9和90, 应该优先将9排在前面, 所以需要自己写一个比较函数, 对于输入的字符串a和b:
+如果a==b, 那么直接返回0.
+否则, 初始化: i=0, i< min(len(a), len(b))
+
+如果a_i == b_i, 那么 i += 1
+否则, 返回a[i] - b[i]
+最后返回a+b, b+a的比较.
+
+代码
+
+from functools import cmp_to_keyclass Solution(object):
+    def largestNumber(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: str
+        """
+        def cmpStr(s1, s2):
+            if s1 == s2:                return 1
+            i = 0
+            while i < len(s1) and i < len(s2):
+                a_i = s1[i]
+                b_i = s2[i]                if a_i != b_i:                    return int(a_i) - int(b_i)
+                i += 1
+            return cmpStr(s1+s2, s2+s1)
+        str_nums = []        for num in nums:
+            str_nums.append(str(num))
+        str_nums = sorted(str_nums, key=cmp_to_key(cmpStr), reverse=True)        if len(str_nums) > 0 and str_nums[0] != "0":            return "".join(str_nums)        else:            return "0"
+s = Solution()
+nums = [9051,5526,2264,5041,1630,5906,6787,8382,4662,4532,6804,4710,4542,2116,7219,8701,8308,957,8775,4822,396,8995,8597,2304,8902,830,8591,5828,9642,7100,3976,5565,5490,1613,5731,8052,8985,2623,6325,3723,5224,8274,4787,6310,3393,78,3288,7584,7440,5752,351,4555,7265,9959,3866,9854,2709,5817,7272,43,1014,7527,3946,4289,1272,5213,710,1603,2436,8823,5228,2581,771,3700,2109,5638,3402,3910,871,5441,6861,9556,1089,4088,2788,9632,6822,6145,5137,236,683,2869,9525,8161,8374,2439,6028,7813,6406,7519]
+print(s.largestNumber(nums))
+nums = [121,12]
+print(s.largestNumber(nums))
+nums = [0, 0]
+print(s.largestNumber(nums))
+995998549642963295795569525905189958985890288238775871870185978591838283748308830827481618052787813771758475277519744072727265721971071006861683682268046787640663256310614560285906582858175752573156385565552654905441522852245213513750414822478747104662455545424532434289408839763963946391038663723370035134023393328828692788270926232581243924362362304226421162109163016131603127210891014
+12121
+0
+180. Consecutive Numbers
+
+问题难度: ? ? ?
+
+问题描述
+
+写一个SQL语句找到至少连续出现3次的所有数字.
+
++----+-----+
+| Id | Num |
++----+-----+
+| 1  |  1  |
+| 2  |  1  |
+| 3  |  1  |
+| 4  |  2  |
+| 5  |  1  |
+| 6  |  2  |
+| 7  |  2  |
++----+-----+
+例如, 给定上面的Logs表格, 1是唯一一个至少连续出现3次的数字.
+
++-----------------+
+| ConsecutiveNums |
++-----------------+
+| 1               |
++-----------------+
+解题思路
+
+这道题目其实比较考察 SQL语句中参数的定义和使用.
+
+思路很简单: 初始化两个值, 一个是之前的数pre_num, 一个是之前的计数count, 当pre_num == Num时, 增加count; 当pre_num != Num时, 输出pre_num和count, 最后输出所有count >=3的num即可.
+
+代码
+
+# Write your MySQL query statement below
+SELECT DISTINCT t.Num as ConsecutiveNums FROM (SELECT Num,
+CASE 
+WHEN Num = @preNum THEN @count := @count + 1
+ELSE @count := 1
+END
+AS count, 
+@preNum := Num as preNum
+FROM Logs, (SELECT @count := 0, @preNum := NULL) INIT) t WHERE t.count >= 3;
