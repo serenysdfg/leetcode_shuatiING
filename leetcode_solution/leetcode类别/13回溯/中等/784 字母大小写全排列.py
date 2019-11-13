@@ -1,30 +1,30 @@
 class Solution:
     def letterCasePermutation(self, S: str) -> List[str]:
         #copy回溯
-    res = []
-    self.dfs("", S, res, 0)
-    return res
+        res = []
+        self.dfs("", S, res, 0)
+        return res
 
-def dfs(self, pre, S, res, index):
-    """
-    :type pre: str
-    :type S: str
-    :type res: List[str]
-    :type index: int
-    :rtype: None
-    """
-    if index == len(S):
-        res.append(pre)
-    else:
-        ch = S[index]
-        if str.isdigit(ch):
-            self.dfs(pre + ch, S, res, index + 1)
+    def dfs(self, pre, S, res, index):
+        """
+        :type pre: str
+        :type S: str
+        :type res: List[str]
+        :type index: int
+        :rtype: None
+        """
+        if index == len(S):
+            res.append(pre)
         else:
-            ch = str.lower(ch)
-            self.dfs(pre + ch, S, res, index + 1)
+            ch = S[index]
+            if str.isdigit(ch):
+                self.dfs(pre + ch, S, res, index + 1)
+            else:
+                ch = str.lower(ch)
+                self.dfs(pre + ch, S, res, index + 1)
 
-            ch = str.upper(ch)
-            self.dfs(pre + ch, S, res, index + 1)
+                ch = str.upper(ch)
+                self.dfs(pre + ch, S, res, index + 1)
 
 
 
